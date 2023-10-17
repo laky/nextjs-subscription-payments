@@ -5,7 +5,6 @@ import {
   upsertPriceRecord,
   manageSubscriptionStatusChange
 } from '@/utils/supabase-admin';
-import { headers } from 'next/headers';
 
 const relevantEvents = new Set([
   'product.created',
@@ -20,9 +19,8 @@ const relevantEvents = new Set([
 
 export async function POST(req: Request) {
   const body = await req.text();
-  const sig = headers().get('Stripe-Signature') as string;
-  const webhookSecret =
-    process.env.STRIPE_WEBHOOK_SECRET_LIVE ?? process.env.STRIPE_WEBHOOK_SECRET;
+  const sig = req.headers.get('stripe-signature') as string;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   let event: Stripe.Event;
 
   try {
@@ -70,9 +68,12 @@ export async function POST(req: Request) {
       }
     } catch (error) {
       console.log(error);
-      return new Response('Webhook handler failed. View logs.', {
-        status: 400
-      });
+      return new Response(
+        'Webhook handler failed. View your nextjs function logs.',
+        {
+          status: 400
+        }
+      );
     }
   }
   return new Response(JSON.stringify({ received: true }));
